@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bybit Paper Trading Bot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #101827;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 700px;
+            margin: auto;
+        }
+        h1 { color: #f7a600; }
+        .card {
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 15px 0;
+        }
+        .status {
+            color: #22c55e;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>BYBIT PAPER BOT</h1>
+    <p>모의투자 자동매매 대시보드</p>
+
+    <div class="card">
+        <h3>프로그램 상태</h3>
+        <p class="status">모의투자 대기 중</p>
+    </div>
+
+    <div class="card">
+        <h3>계좌 정보</h3>
+        <p>초기 투자금: <span id="balance">-</span></p>
+        <p>현재 자산: <span id="equity">-</span></p>
+        <p>누적 수익률: <span id="profit">-</span></p>
+    </div>
+
+    <div class="card">
+        <h3>자동매매 설정</h3>
+        <p>거래소: Bybit Testnet</p>
+        <p>거래 방식: Paper Trading</p>
+        <p>실제 자금 사용: 아니요</p>
+    </div>
+
+    <div class="card">
+        <h3>거래 내역</h3>
+        <p>아직 거래 내역이 없습니다.</p>
+    </div>
+</div>
+</body>  
+</html>
