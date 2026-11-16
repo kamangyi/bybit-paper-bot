@@ -1,62 +1,272 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bybit Paper Trading Bot</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #101827;
-            color: white;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 700px;
-            margin: auto;
-        }
-        h1 { color: #f7a600; }
-        .card {
-            background: #1e293b;
-            padding: 20px;
-            border-radius: 12px;
-            margin: 15px 0;
-        }
-        .status {
-            color: #22c55e;
-            font-weight: bold;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BYBIT PAPER BOT</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:20px;background:#0b1120;color:#e5e7eb;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.container{max-width:1100px;margin:auto}
+header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:25px}
+h1{margin:0;font-size:25px;color:#f8fafc}
+.subtitle{color:#94a3b8;font-size:12px;margin-top:6px}
+.badge{background:#172554;color:#60a5fa;padding:8px 12px;border-radius:20px;font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.card{background:#151f32;border:1px solid #263449;border-radius:12px;padding:18px;margin-bottom:15px;overflow:hidden}
+.label{color:#94a3b8;font-size:12px;margin-bottom:10px}
+.value{font-size:22px;font-weight:bold;word-break:break-word}
+.green{color:#34d399}
+.red{color:#fb7185}
+.gray{color:#94a3b8}
+h2{font-size:16px;margin:0 0 15px}
+button{border:0;border-radius:8px;padding:12px 18px;font-size:14px;font-weight:bold;cursor:pointer;margin-right:6px;margin-bottom:6px}
+.start{background:#059669;color:white}
+.stop{background:#dc2626;color:white}
+.reset{background:#475569;color:white}
+button:active{opacity:.7}
+.status-line{display:flex;align-items:center;gap:8px;margin-bottom:15px;color:#cbd5e1;font-size:14px}
+.dot{width:9px;height:9px;border-radius:50%;background:#64748b}
+.dot.on{background:#34d399;box-shadow:0 0 8px #34d399}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:450px}
+th,td{padding:12px 8px;text-align:left;border-bottom:1px solid #263449}
+th{color:#94a3b8;font-weight:normal}
+.table-wrap{overflow-x:auto}
+.empty{color:#64748b;text-align:center;padding:20px}
+.footer{color:#64748b;text-align:center;font-size:11px;margin-top:25px}
+@media(max-width:700px){
+body{padding:13px}
+.grid{grid-template-columns:repeat(2,1fr)}
+.value{font-size:18px}
+h1{font-size:21px}
+}
+</style>
 </head>
 <body>
 <div class="container">
-    <h1>BYBIT PAPER BOT</h1>
-    <p>모의투자 자동매매 대시보드</p>
 
-    <div class="card">
-        <h3>프로그램 상태</h3>
-        <p class="status">모의투자 대기 중</p>
-    </div>
-
-    <div class="card">
-        <h3>계좌 정보</h3>
-        <p>초기 투자금: <span id="balance">-</span></p>
-        <p>현재 자산: <span id="equity">-</span></p>
-        <p>누적 수익률: <span id="profit">-</span></p>
-    </div>
-
-    <div class="card">
-        <h3>자동매매 설정</h3>
-        <p>거래소: Bybit Testnet</p>
-        <p>거래 방식: Paper Trading</p>
-        <p>실제 자금 사용: 아니요</p>
-    </div>
-
-    <div class="card">
-        <h3>거래 내역</h3>
-        <p>아직 거래 내역이 없습니다.</p>
-    </div>
+<header>
+<div>
+<h1>BYBIT PAPER BOT</h1>
+<div class="subtitle">자동매매 대시보드 · 가상매매 테스트</div>
 </div>
-</body>  
+<div class="badge">PAPER TRADING · TEST MODE</div>
+</header>
+
+<div class="card">
+<div class="status-line">
+<span class="dot" id="statusDot"></span>
+<span id="botStatus">상태 확인 중...</span>
+</div>
+<button class="start" onclick="controlBot('start')">▶ 봇 시작</button>
+<button class="stop" onclick="controlBot('stop')">■ 봇 중지</button>
+<button class="reset" onclick="resetBot()">초기화</button>
+<div class="subtitle" id="lastUpdate">데이터 불러오는 중...</div>
+</div>
+
+<div class="grid">
+<div class="card"><div class="label">초기 자본</div><div class="value" id="startingBalance">-</div></div>
+<div class="card"><div class="label">현재 잔고</div><div class="value" id="balance">-</div></div>
+<div class="card"><div class="label">총 평가금액</div><div class="value" id="equity">-</div></div>
+<div class="card"><div class="label">누적 수익률</div><div class="value" id="returnRate">-</div></div>
+<div class="card"><div class="label">실현 손익</div><div class="value" id="realizedPnl">-</div></div>
+<div class="card"><div class="label">미실현 손익</div><div class="value" id="unrealizedPnl">-</div></div>
+<div class="card"><div class="label">완료 거래</div><div class="value" id="closedTrades">-</div></div>
+<div class="card"><div class="label">승률</div><div class="value" id="winRate">-</div></div>
+</div>
+
+<div class="card">
+<h2>현재 보유 포지션</h2>
+<div id="positionArea" class="empty">보유 포지션 없음</div>
+</div>
+
+<div class="card">
+<h2>관심 코인 시세</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>코인</th><th>현재 가격</th></tr></thead>
+<tbody id="priceTable">
+<tr><td colspan="2" class="empty">데이터 없음</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div class="card">
+<h2>최근 거래 내역</h2>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>코인</th><th>방향</th><th>진입 가격</th><th>청산 가격</th><th>손익</th></tr>
+</thead>
+<tbody id="tradeTable">
+<tr><td colspan="5" class="empty">거래 내역 없음</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div class="footer">
+BYBIT PAPER BOT · 가상매매 전용 · 실제 주문 미실행
+</div>
+</div>
+
+<script>
+function safe(value){
+return String(value??"-").replace(/[&<>"']/g,function(c){
+return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+});
+}
+
+function number(value){
+const n=Number(value);
+return Number.isFinite(n)
+?n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})
+:"-";
+}
+
+function money(value){
+return number(value)+" USDT";
+}
+
+function setValue(id,value){
+document.getElementById(id).textContent=value;
+}
+
+function setColor(id,value){
+const el=document.getElementById(id);
+el.classList.remove("green","red","gray");
+const n=Number(value);
+if(n>0)el.classList.add("green");
+else if(n<0)el.classList.add("red");
+else el.classList.add("gray");
+}
+
+async function updateDashboard(){
+try{
+const response=await fetch("/api/status",{cache:"no-store"});
+if(!response.ok)throw new Error("상태 조회 실패");
+
+const data=await response.json();
+const state=data.state||data;
+const running=state.running===true;
+
+document.getElementById("statusDot").classList.toggle("on",running);
+setValue("botStatus",running?"봇 실행 중":"봇 중지 상태");
+
+const starting=Number(state.starting_balance??1000);
+const balance=Number(state.balance??0);
+const equity=Number(data.equity??state.equity??balance);
+const realized=Number(state.realized_pnl??state.realizedPnL??0);
+const unrealized=Number(state.unrealized_pnl??state.unrealizedPnL??0);
+const profitRate=starting?((equity-starting)/starting)*100:0;
+
+setValue("startingBalance",money(starting));
+setValue("balance",money(balance));
+setValue("equity",money(equity));
+setValue("returnRate",profitRate.toFixed(2)+"%");
+setValue("realizedPnl",money(realized));
+setValue("unrealizedPnl",money(unrealized));
+
+setColor("returnRate",profitRate);
+setColor("realizedPnl",realized);
+setColor("unrealizedPnl",unrealized);
+
+const trades=state.trades||[];
+const closedTrades=Number(state.closed_trades??state.closedTrades??trades.length);
+setValue("closedTrades",closedTrades);
+
+const winRate=Number(data.win_rate??state.win_rate??0);
+setValue("winRate",winRate.toFixed(1)+"%");
+
+const position=state.position;
+
+if(position&&Object.keys(position).length>0){
+document.getElementById("positionArea").innerHTML=`
+<div class="table-wrap"><table>
+<tr><th>코인</th><td>${safe(position.symbol)}</td></tr>
+<tr><th>방향</th><td>${safe(position.side)}</td></tr>
+<tr><th>진입 가격</th><td>${number(position.entry_price)}</td></tr>
+<tr><th>수량</th><td>${number(position.qty)}</td></tr>
+<tr><th>손절 가격</th><td>${number(position.stop_loss)}</td></tr>
+<tr><th>목표 가격</th><td>${number(position.take_profit)}</td></tr>
+</table></div>`;
+}else{
+document.getElementById("positionArea").textContent="현재 보유 포지션 없음";
+}
+
+const prices=state.prices||{};
+const priceTable=document.getElementById("priceTable");
+const priceEntries=Object.entries(prices);
+
+if(priceEntries.length){
+priceTable.innerHTML=priceEntries.map(([symbol,price])=>`
+<tr><td>${safe(symbol)}</td><td>${number(price)}</td></tr>
+`).join("");
+}else{
+priceTable.innerHTML='<tr><td colspan="2" class="empty">시세 데이터 없음</td></tr>';
+}
+
+const tradeTable=document.getElementById("tradeTable");
+
+if(trades.length){
+tradeTable.innerHTML=trades.slice(-20).reverse().map(t=>{
+const pnl=Number(t.pnl??t.profit??0);
+const color=pnl>0?"green":pnl<0?"red":"gray";
+
+return `<tr>
+<td>${safe(t.symbol)}</td>
+<td>${safe(t.side)}</td>
+<td>${number(t.entry_price)}</td>
+<td>${number(t.exit_price)}</td>
+<td class="${color}">${number(pnl)}</td>
+</tr>`;
+}).join("");
+}else{
+tradeTable.innerHTML='<tr><td colspan="5" class="empty">아직 거래 내역이 없습니다.</td></tr>';
+}
+
+setValue("lastUpdate","마지막 업데이트: "+new Date().toLocaleTimeString("ko-KR"));
+
+}catch(error){
+setValue("lastUpdate","데이터 연결 오류: "+error.message);
+}
+}
+
+async function controlBot(action){
+try{
+const response=await fetch("/api/"+action,{method:"POST"});
+const result=await response.json();
+
+if(!response.ok)throw new Error(result.error||"요청 실패");
+
+alert(action==="start"?"봇 시작 요청 완료!":"봇 중지 요청 완료!");
+updateDashboard();
+
+}catch(error){
+alert("오류: "+error.message);
+}
+}
+
+async function resetBot(){
+if(!confirm("정말 초기화할까요? 가상매매 기록과 잔고가 초기화됩니다."))return;
+
+try{
+const response=await fetch("/api/reset",{method:"POST"});
+const result=await response.json();
+
+if(!response.ok)throw new Error(result.error||"초기화 실패");
+
+alert("초기화 완료!");
+updateDashboard();
+
+}catch(error){
+alert("오류: "+error.message);
+}
+}
+
+updateDashboard();
+setInterval(updateDashboard,5000);
+</script>
+</body>
 </html>
