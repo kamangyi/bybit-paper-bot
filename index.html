@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101827"><title>Bybit 모의 자동매매</title>
+<style>
+:root{--bg:#0b1220;--card:#141f32;--muted:#93a4bd;--text:#f4f7fb;--line:#26354c;--green:#22c58b;--red:#ff6b75;--blue:#76a9ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:env(safe-area-inset-top) 14px calc(24px + env(safe-area-inset-bottom))}
+.wrap{max-width:900px;margin:auto}.top{display:flex;justify-content:space-between;align-items:center;padding:22px 2px 14px}.top h1{font-size:20px;margin:0}.badge{font-size:12px;color:#ffd27a;border:1px solid #705a2c;border-radius:20px;padding:6px 10px}
+.note{background:#302716;border:1px solid #705a2c;color:#ffe2a6;padding:11px 13px;border-radius:12px;font-size:12px;line-height:1.5;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.card{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:15px;min-width:0}.label{font-size:12px;color:var(--muted);margin-bottom:8px}.value{font-size:22px;font-weight:750;overflow-wrap:anywhere}.sub{font-size:11px;color:var(--muted);margin-top:5px}.section{margin:20px 0 10px;font-size:15px}.controls{display:flex;gap:9px;margin-top:14px}.btn{border:0;border-radius:12px;padding:14px 10px;font-size:14px;font-weight:700;flex:1}.start{background:var(--green);color:#06291e}.stop{background:#3a2630;color:#ffb4bb}.reset{background:#26354c;color:#e2eafa}.positive{color:var(--green)}.negative{color:var(--red)}.muted{color:var(--muted)}.position{line-height:1.8;font-size:13px}.tablewrap{overflow-x:auto}.table{width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap}.table th,.table td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line)}.table th{color:var(--muted);font-weight:600}.statusline{font-size:12px;color:var(--muted);margin:12px 2px}.foot{font-size:11px;color:var(--muted);line-height:1.6;margin:20px 2px}
+@media(min-width:650px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.value{font-size:24px}}
+</style></head>
+<body><div class="wrap">
+<div class="top"><h1>₿ Bybit 모의 자동매매</h1><span class="badge">PAPER ONLY · 실주문 없음</span></div>
+<div class="note">가상자금 1,000 USDT · BTC 3배 / 알트 5배 · 공개 시세만 사용합니다. 실제 자금이나 거래소 계정에는 접근하지 않습니다.</div>
+<div class="grid">
+<div class="card"><div class="label">총 평가자산</div><div class="value" id="equity">—</div><div class="sub">USDT 기준</div></div>
+<div class="card"><div class="label">누적 실현손익</div><div class="value" id="pnl">—</div><div class="sub">수수료 가정치 반영</div></div>
+<div class="card"><div class="label">수익률</div><div class="value" id="roi">—</div><div class="sub">초기자금 대비</div></div>
+<div class="card"><div class="label">승률</div><div class="value" id="win">—</div><div class="sub" id="count">종료 거래 0회</div></div>
+</div>
+<div class="controls"><button class="btn start" onclick="action('start')">▶ 자동매매 시작</button><button class="btn stop" onclick="action('stop')">■ 중지</button><button class="btn reset" onclick="resetBot()">초기화</button></div>
+<div class="statusline" id="status">상태 확인 중…</div>
+<h2 class="section">현재 포지션</h2><div class="card position" id="position">보유 포지션 없음</div>
+<h2 class="section">감시 코인</h2><div class="card"><div id="watch" class="muted">시작하면 감시 종목이 표시됩니다.</div></div>
+<h2 class="section">최근 거래 내역</h2><div class="card tablewrap"><table class="table"><thead><tr><th>시간(UTC)</th><th>구분</th><th>코인</th><th>방향</th><th>가격</th><th>손익</th><th>사유</th></tr></thead><tbody id="trades"><tr><td colspan="7" class="muted">거래 내역 없음</td></tr></tbody></table></div>
+<div class="foot">전략은 15분봉 EMA20/EMA50 + MACD + RSI + 거래량 확인, ATR 손절 및 2R 익절을 사용하는 실험용 예시입니다. 거래당 위험 예산 0.5%, UTC 일일 손실 제한 2%입니다. 수수료 1회당 0.055% 가정이며 펀딩비·슬리피지·호가단위·부분체결은 정교하게 반영하지 않았습니다. 모의 체결과 실제 체결은 다를 수 있으며 수익성이 검증된 전략이 아닙니다. 서버가 중지되거나 잠들면 자동매매도 멈춥니다.</div>
+</div>
+<script>
+const fmt=(n,d=2)=>Number(n||0).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+async function action(a){try{let r=await fetch('/api/'+a,{method:'POST'});let j=await r.json();alert(j.message||'완료');refresh()}catch(e){alert('요청 실패: '+e)}}
+async function resetBot(){if(confirm('모의 잔고와 포지션을 초기화할까요?')) await action('reset')}
+async function refresh(){try{
+ const r=await fetch('/api/status');const s=await r.json();
+ const equity=Number(s.equity), pnl=Number(s.realized_pnl), roi=(equity/Number(s.starting_balance)-1)*100;
+ document.getElementById('equity').textContent=fmt(equity)+' USDT';
+ document.getElementById('pnl').textContent=(pnl>=0?'+':'')+fmt(pnl);
+ document.getElementById('pnl').className='value '+(pnl>=0?'positive':'negative');
+ document.getElementById('roi').textContent=(roi>=0?'+':'')+fmt(roi)+'%';
+ document.getElementById('roi').className='value '+(roi>=0?'positive':'negative');
+ document.getElementById('win').textContent=fmt(s.win_rate,1)+'%';
+ document.getElementById('count').textContent='종료 거래 '+s.closed_trades+'회 · 승리 '+s.wins+'회';
+ document.getElementById('status').textContent=(s.running?'🟢 자동매매 실행 중':'⚪ 자동매매 중지')+' · 마지막 확인: '+(s.last_scan?new Date(s.last_scan).toLocaleString():'없음')+(s.last_error?' · 오류: '+s.last_error:'');
+ const p=s.position;
+ document.getElementById('position').innerHTML=p?`<b>${p.symbol} · ${p.side}</b><br>진입가: ${fmt(p.entry,6)}<br>수량: ${fmt(p.qty,6)}<br>레버리지: ${p.leverage}배<br>손절: ${fmt(p.stop,6)}<br>익절: ${fmt(p.target,6)}<br>미실현손익(대략): <span class="${s.unrealized_pnl>=0?'positive':'negative'}">${fmt(s.unrealized_pnl)} USDT</span>`:'보유 포지션 없음';
+ document.getElementById('watch').textContent=(s.watchlist||[]).join(' · ')||'아직 감시 종목이 없습니다.';
+ const rows=(s.trades||[]).slice(0,15);
+ document.getElementById('trades').innerHTML=rows.length?rows.map(t=>`<tr><td>${new Date(t.time).toLocaleString()}</td><td>${t.event}</td><td>${t.symbol}</td><td>${t.side}</td><td>${fmt(t.price,5)}</td><td class="${Number(t.pnl)>=0?'positive':'negative'}">${fmt(t.pnl)}</td><td>${t.reason}</td></tr>`).join(''):'<tr><td colspan="7" class="muted">거래 내역 없음</td></tr>';
+ }catch(e){document.getElementById('status').textContent='서버 연결 실패: '+e}}
+refresh();setInterval(refresh,5000);
+</script></body></html>
